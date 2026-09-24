@@ -1,0 +1,147 @@
+# ==========================================
+# Genetic Algorithm Optimization
+# Computational Science Laboratory
+# ==========================================
+
+import random
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ------------------------------------------
+# USER INPUT
+# ------------------------------------------
+population_size = int(input("Population Size: "))
+generations = int(input("Number of Generations: "))
+mutation_rate = float(input("Mutation Rate (0-1): "))
+
+# ------------------------------------------
+# SEARCH SPACE
+# ------------------------------------------
+LOWER_BOUND = -1
+UPPER_BOUND = 2
+
+# ------------------------------------------
+# OBJECTIVE FUNCTION
+# ------------------------------------------
+# I created a sample objective function here. 
+# You can replace this with any function you want to optimize.
+def fitness(x):
+    # Example: A simple parabola with a maximum at x=1
+    return -(x - 1)**2 + 5
+
+# ------------------------------------------
+# INITIALIZATION (Missing from screenshots but necessary)
+# ------------------------------------------
+# Create an initial population of random values within the bounds
+population = [random.uniform(LOWER_BOUND, UPPER_BOUND) for _ in range(population_size)]
+
+# Lists to store data for plotting
+best_history = []
+best_x = None
+best_fitness = -np.inf
+
+# ------------------------------------------
+# EVOLUTION
+# ------------------------------------------
+for generation in range(generations):
+    
+    # Evaluate fitness for the current population
+    scores = [fitness(x) for x in population]
+    
+    # Find the best solution in this generation
+    best_index = np.argmax(scores)
+    best_solution = population[best_index]
+    best_score = scores[best_index]
+    
+    # Keep track of the overall best solution found so far
+    if best_score > best_fitness:
+        best_fitness = best_score
+        best_x = best_solution
+        
+    best_history.append(best_score)
+    
+    # Print progress
+    print(f"Generation {generation+1:3d} "
+          f"Best x={best_solution:.5f} "
+          f"Fitness={best_score:.5f}")
+    
+    # ------------------------------------------
+    # SELECTION
+    # ------------------------------------------
+    # Ensure weights are non-negative for random.choices
+    # (Fitness values might be negative depending on your function)
+    min_score = min(scores)
+    if min_score < 0:
+        adjusted_scores = [s - min_score + 0.001 for s in scores]
+    else:
+        adjusted_scores = scores
+        
+    selected = random.choices(
+        population,
+        weights=adjusted_scores,
+        k=population_size
+    )
+    
+    # ------------------------------------------
+    # CROSSOVER & MUTATION (Missing from screenshots but necessary)
+    # ------------------------------------------
+    new_population = []
+    for i in range(0, population_size, 2):
+        parent1 = selected[i]
+        # Handle odd population sizes
+        parent2 = selected[i+1] if i+1 < population_size else selected[0]
+        
+        # Crossover (Arithmetic)
+        child1 = (parent1 + parent2) / 2
+        child2 = (parent1 + parent2) / 2
+        
+        # Mutation
+        if random.random() < mutation_rate:
+            child1 += random.uniform(-0.2, 0.2)
+            
+        if random.random() < mutation_rate:
+            child2 += random.uniform(-0.2, 0.2)
+            
+        # Clip to bounds
+        child1 = np.clip(child1, LOWER_BOUND, UPPER_BOUND)
+        child2 = np.clip(child2, LOWER_BOUND, UPPER_BOUND)
+        
+        new_population.extend([child1, child2])
+        
+    # Update population for the next generation
+    population = new_population[:population_size]
+
+# Print final results
+print("\nOptimization Complete")
+print("---------------------------")
+print(f"Optimal x   : {best_x:.6f}")
+print(f"Maximum Fitness: {best_fitness:.6f}")
+
+# ------------------------------------------
+# PLOT FITNESS EVOLUTION
+# ------------------------------------------
+plt.figure(figsize=(8,5))
+plt.plot(best_history, linewidth=2)
+plt.title("Genetic Algorithm Optimization")
+plt.xlabel("Generation")
+plt.ylabel("Best Fitness")
+plt.grid(True)
+plt.tight_layout()
+plt.show()
+
+# ------------------------------------------
+# PLOT OBJECTIVE FUNCTION
+# ------------------------------------------
+x = np.linspace(LOWER_BOUND, UPPER_BOUND, 500)
+y = fitness(x)
+
+plt.figure(figsize=(8,5))
+plt.plot(x, y, linewidth=2)
+plt.scatter(best_x, best_fitness, s=120, color='red', label='Optimal Solution')
+plt.title("Objective Function")
+plt.xlabel("x")
+plt.ylabel("Fitness")
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
